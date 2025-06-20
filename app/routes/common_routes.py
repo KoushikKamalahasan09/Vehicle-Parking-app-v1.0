@@ -7,6 +7,12 @@ bp = Blueprint('common', __name__)
 
 @bp.route('/')
 def index():
+
+    if 'username' in session:
+        if session.get('role') == True:  # Admin
+            return redirect(url_for('admin.admin_dashboard'))
+        else:  # Regular user
+            return redirect(url_for('user.user_dashboard', username=session['username']))
     return redirect(url_for('auth.login'))
 
 @bp.route('/dashboard')
@@ -22,7 +28,7 @@ def dashboard_redirect():
     if is_admin:
         return redirect(url_for('admin.admin_dashboard'))
     else:
-        return redirect(url_for('user.user_dashboard', username=username))
+        return redirect(url_for('user.user_dashboard'))
     
 @bp.route('/summary')
 @login_required
@@ -37,7 +43,7 @@ def summary_redirect():
     if is_admin:
         return redirect(url_for('admin.list_users'))
     else:
-        return redirect(url_for('user.user_profile', username=username))  #Needs to add summary routes before this can be used
+        return redirect(url_for('user.user_profile'))  #Needs to add summary routes before this can be used
     
     
 @bp.route('/profile')
@@ -53,4 +59,4 @@ def profile_redirect():
     if is_admin:
         return redirect(url_for('admin.admin_profile'))
     else:
-        return redirect(url_for('user.user_profile', username=username))
+        return redirect(url_for('user.user_profile'))

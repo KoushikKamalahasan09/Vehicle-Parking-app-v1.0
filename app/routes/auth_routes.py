@@ -12,7 +12,14 @@ def login():
 
 @bp.route('/register')
 def register():
+    if 'username' in session:
+        flash("You're already logged in.")
+        if session.get('role') == True:
+            return redirect(url_for('admin.admin_dashboard'))
+        else:
+            return redirect(url_for('user.user_dashboard', username=session['username']))
     return render_template('auth/register.html')
+
 
 @bp.route('/logout')
 @login_required
@@ -36,7 +43,7 @@ def login_post():
         return redirect(url_for('admin.admin_dashboard'))
     else:
         flash(f"Welcome back, {username}!")
-        return redirect(url_for('user.user_dashboard', username=username))
+        return redirect(url_for('user.user_dashboard',username=username))
     
 
 @bp.route('/register', methods=['POST'])

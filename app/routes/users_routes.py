@@ -6,13 +6,14 @@ bp = Blueprint('user', __name__)
 
 @bp.route('/<username>/dashboard')
 @login_required
-def user_dashboard():
-    username=session.get('username')
-    if not username:
-        flash("You need to log in first.")
+def user_dashboard(username):
+    if session.get('username') != username:
+        flash("Access denied.")
         return redirect(url_for('auth.login'))
+
     flash(f"Welcome to your dashboard, {username}!")
     return render_template('user/user_dashboard.html')
+
 
 @bp.route('/<username>/profile')
 @login_required

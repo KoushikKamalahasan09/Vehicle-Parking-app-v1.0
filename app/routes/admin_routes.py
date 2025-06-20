@@ -8,7 +8,6 @@ bp = Blueprint('admin', __name__, url_prefix='/admin')
 @bp.route('/dashboard')
 @admin_required
 def admin_dashboard():
-    flash("Welcome to the admin dashboard!")
     username = session.get('username')
     user= User.query.filter_by(username=username).first()
     return render_template('admin/admin_dashboard.html',user=user)
