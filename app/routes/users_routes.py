@@ -6,10 +6,28 @@ bp = Blueprint('user', __name__)
 
 @bp.route('/<username>/dashboard')
 @login_required
-def user_dashboard(username):
-    if username != session.get('username'):
-        session.pop('username', None)
-        flash("You are not authorized to view this page. You are being logged out.")
+def user_dashboard():
+    username=session.get('username')
+    if not username:
+        flash("You need to log in first.")
         return redirect(url_for('auth.login'))
     flash(f"Welcome to your dashboard, {username}!")
     return render_template('user/dashboard.html')
+
+@bp.route('/<username>/profile')
+@login_required
+def user_profile():
+    username = session.get('username')
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        flash("User not found.")
+        return redirect(url_for('auth.login'))
+    
+    return render_template('user/user_profile.html', user=user)
+
+@bp.route('/<username>/profile/update')
+@login_required
+def update_profile():
+    username = session['username']
+    user = User.query.filter_by(username=username).first()    
+    return render_template('user/edit_profile.html',user=user) 

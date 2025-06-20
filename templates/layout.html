@@ -46,7 +46,7 @@
     const toggleBtn = document.getElementById('themeToggle');
     const userPref = localStorage.getItem('theme');
 
-    if (userPref === 'dark') {
+    if (toggleBtn && userPref === 'dark') {
       document.body.classList.add('bg-dark', 'text-light');
       toggleBtn.textContent = '☀️';
     }
