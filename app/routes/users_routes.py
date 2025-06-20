@@ -12,7 +12,7 @@ def user_dashboard():
         flash("You need to log in first.")
         return redirect(url_for('auth.login'))
     flash(f"Welcome to your dashboard, {username}!")
-    return render_template('user/dashboard.html')
+    return render_template('user/user_dashboard.html')
 
 @bp.route('/<username>/profile')
 @login_required

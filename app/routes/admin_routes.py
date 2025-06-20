@@ -11,7 +11,7 @@ def admin_dashboard():
     flash("Welcome to the admin dashboard!")
     username = session.get('username')
     user= User.query.filter_by(username=username).first()
-    return render_template('admin/dashboard.html',user=user)
+    return render_template('admin/admin_dashboard.html',user=user)
 
 @bp.route('/users')
 @admin_required

@@ -5,6 +5,10 @@ from app.utils.decorators import login_required
 
 bp = Blueprint('common', __name__)
 
+@bp.route('/')
+def index():
+    return redirect(url_for('auth.login'))
+
 @bp.route('/dashboard')
 @login_required
 def dashboard_redirect():
