@@ -34,7 +34,7 @@ def login_post():
     password = request.form.get('password')
     user = User.query.filter_by(username=username).first()
     if not user or not check_password_hash(user.passhash, password):
-        flash("Username or password is incorrect")
+        flash("Username or password is incorrect", "danger")
         return redirect(url_for('auth.login'))
     session['username'] = username
     session['role']=user.is_admin

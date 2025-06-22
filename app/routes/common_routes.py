@@ -28,7 +28,7 @@ def dashboard_redirect():
     if is_admin:
         return redirect(url_for('admin.admin_dashboard'))
     else:
-        return redirect(url_for('user.user_dashboard'))
+        return redirect(url_for('user.user_dashboard',username=username))
     
 @bp.route('/summary')
 @login_required
@@ -43,7 +43,7 @@ def summary_redirect():
     if is_admin:
         return redirect(url_for('admin.list_users'))
     else:
-        return redirect(url_for('user.user_profile'))  #Needs to add summary routes before this can be used
+        return redirect(url_for('user.user_profile',username=username))  #Needs to add summary routes before this can be used
     
     
 @bp.route('/profile')
@@ -59,4 +59,4 @@ def profile_redirect():
     if is_admin:
         return redirect(url_for('admin.admin_profile'))
     else:
-        return redirect(url_for('user.user_profile'))
+        return redirect(url_for('user.user_profile',username=username))
