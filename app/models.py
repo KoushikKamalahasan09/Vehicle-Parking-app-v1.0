@@ -60,3 +60,5 @@ class Reservation(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at= db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    
+    
