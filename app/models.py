@@ -1,12 +1,16 @@
 # app/models.py
 
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime,timezone
 
 db = SQLAlchemy()
 
 # User model
 class User(db.Model):
+    
+    __tablename__ = 'users'
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     passhash = db.Column(db.String(128), nullable=False)
@@ -16,6 +20,10 @@ class User(db.Model):
 
 # Parking lot model
 class ParkingLot(db.Model):
+    
+    __tablename__ = 'parking_lots'
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     prime_location_name = db.Column(db.String(100), nullable=False)
     price_per_hour = db.Column(db.Float, nullable=False)
@@ -26,6 +34,10 @@ class ParkingLot(db.Model):
 
 # Parking spot model
 class ParkingSpot(db.Model):
+    
+    __tablename__ = 'parking_spots'
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     lot_id = db.Column(db.Integer, db.ForeignKey('parking_lot.id'), nullable=False)
     is_avail = db.Column(db.Boolean, default=True, nullable=False)
@@ -34,10 +46,17 @@ class ParkingSpot(db.Model):
 
 # Reservation model
 class Reservation(db.Model):
+    
+    __tablename__ = 'reservations'
+
+
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
-    parking_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    parking_timestamp = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     leaving_timestamp = db.Column(db.DateTime)
     parking_cost = db.Column(db.Float)
     is_active = db.Column(db.Boolean, default=True)
+    created_at= db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
