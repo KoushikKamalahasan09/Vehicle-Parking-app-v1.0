@@ -37,6 +37,30 @@ const fetchReservations = async () => {
   }
 }
 
+const downloadCsv = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/generate_report/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+
+    if (res.ok) {
+      alert(data.msg || 'Report generation started.')
+      if (data.url) {
+        // optional delay
+        setTimeout(() => {
+          window.open(data.url, '_blank')
+        }, 2000)
+      }
+    } else {
+      alert(data.msg || 'Failed to generate report.')
+    }
+  } catch (err) {
+    console.error('CSV Download Error:', err)
+    alert('Server error')
+  }
+}
+
 const calculateStats = () => {
   let hours = 0, amount = 0
   reservations.value.forEach(r => {
@@ -119,6 +143,9 @@ onMounted(() => {
         <h3>Total Amount Spent</h3>
         <p>₹ {{ totalAmount }}</p>
       </div>
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button class="csv-button" @click="downloadCsv">Download Full CSV Report</button>
+      </div>
     </div>
 
     <canvas id="userChart"></canvas>
@@ -162,4 +189,20 @@ canvas {
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+
+.csv-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.csv-button:hover {
+  background-color: #218838;
+}
+
 </style>

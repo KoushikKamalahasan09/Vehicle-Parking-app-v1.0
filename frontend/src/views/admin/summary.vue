@@ -26,6 +26,26 @@ const fetchReservations = async () => {
   }
 }
 
+const downloadAdminReport = async () => {
+  try {
+    const res = await fetch('http://localhost:5000//generate_report/1', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (res.ok) {
+      alert('Report generation started. Please check your static folder or download shortly.')
+      // Optionally, open the URL:
+      window.open(data.url, '_blank')
+    } else {
+      alert(data.msg || 'Failed to generate report')
+    }
+  } catch (err) {
+    console.error('Report fetch failed:', err)
+    alert('Server error')
+  }
+}
+
+
 const fetchUserCount = async () => {
   try {
     const res = await fetch('http://localhost:5000/users/count', {
@@ -123,6 +143,11 @@ onMounted(() => {
         <h3>Total Revenue</h3>
         <p>₹ {{ totalRevenue }}</p>
       </div>
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <button class="download-btn" @click="downloadAdminReport">
+          Download Full Reservation Report (CSV)
+        </button>
+      </div>
     </div>
 
     <div class="chart-wrapper">
@@ -187,4 +212,20 @@ h1 {
   border-radius: 12px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
+
+.download-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.download-btn:hover {
+  background-color: #1d4ed8;
+}
+
 </style>

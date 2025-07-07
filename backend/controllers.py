@@ -1,7 +1,8 @@
 from flask_restful import Resource, Api
-from flask import request
+from flask import request,send_file
 from datetime import datetime
 #from time import sleep
+import os,csv
 
 
 from models import db, User,ParkingLot, ParkingSpot, Reservation
@@ -520,7 +521,7 @@ class RegisterResource(Resource):
 
 
 class ReportGenerate(Resource):
-    #@jwt_required()
+    @jwt_required()
     def get(self, user_id=None):
         if user_id is None:
             return {'msg': "User ID is required to generate report"}, 400 
@@ -560,4 +561,16 @@ class ReportGenerate(Resource):
         return {
             'msg': "Reservation report generation started.",
             'url': f"http://127.0.0.1:5000/static/{user_id}/reservations_report.csv"
+        }, 202
+        
+class SingleReservationReport(Resource):
+    @jwt_required()
+    def get(self, reservation_id):
+        from celery_app import generate_single_reservation_csv
+        task = generate_single_reservation_csv.delay(reservation_id)
+        res=Reservation.query.get(reservation_id)
+        
+        return {
+            'msg': 'CSV generation started.',
+            'url': f'http://localhost:5000/static/{res.user_id}/reservation_{reservation_id}.csv'
         }, 202

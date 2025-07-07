@@ -36,6 +36,31 @@ const fetchReservations = async () => {
   }
 }
 
+const downloadCsv = async (reservationId) => {
+  try {
+    const res = await fetch(`http://localhost:5000/reservations/${reservationId}/csv`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+
+    if (res.ok) {
+      alert(data.msg || 'CSV requested')
+      if (data.url) {
+        // Optional: wait a bit if needed
+        setTimeout(() => {
+          window.open(data.url, '_blank')
+        }, 2000)
+      }
+    } else {
+      alert(data.msg || 'Failed to request CSV')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Server error')
+  }
+}
+
+
 const endReservation = async (r) => {
   const now = new Date().toISOString()
   try {
@@ -91,6 +116,7 @@ onMounted(fetchReservations)
         <p><strong>From:</strong> {{ formatDateTime(r.parking_timestamp) }}</p>
         <p><strong>To:</strong> {{ formatDateTime(r.leaving_timestamp) }}</p>
         <p><strong>Cost:</strong> ₹{{ r.parking_cost }}</p>
+        <button class="csv" @click="downloadCsv(r.id)">Download CSV</button>
       </div>
     </div>
     <p v-else>No past reservations.</p>
@@ -131,4 +157,14 @@ h2 {
   border-radius: 6px;
   cursor: pointer;
 }
+.csv {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 </style>
