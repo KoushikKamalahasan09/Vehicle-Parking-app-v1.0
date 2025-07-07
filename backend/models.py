@@ -15,7 +15,7 @@ class User(db.Model):
     passhash = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
-    reservations = db.relationship('Reservation', backref='user', lazy=True)
+    reservations = db.relationship('Reservation', backref='user', lazy=True,cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -64,7 +64,7 @@ class ParkingSpot(db.Model):
     spot_number = db.Column(db.String(10), nullable=False)
     is_avail = db.Column(db.Boolean, default=True)
 
-    reservations = db.relationship('Reservation', backref='spot', lazy=True)
+    reservations = db.relationship('Reservation', backref='spot', lazy=True,cascade="all, delete-orphan")
     
 
     def to_dict(self):
@@ -105,7 +105,7 @@ class Reservation(db.Model):
             'user_id': self.user_id,
             'spot_id': self.spot_id,
             'parking_timestamp': self.parking_timestamp.isoformat(),
-            'leaving_timestamp': self.leaving_timestamp.isoformat(),
+            'leaving_timestamp': self.leaving_timestamp.isoformat() if self.leaving_timestamp else "Still using",
             'parking_cost': self.calculate_cost(),
             'is_active': self.is_active
 

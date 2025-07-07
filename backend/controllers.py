@@ -41,15 +41,7 @@ class UsersResource(Resource):
         db.session.add(user); db.session.commit()
         cache.delete('users_list')  # Clear cache after adding a new user
         return {'msg': "Successfully created user!"}
-    
-    @jwt_required()
-    def _get_user_count(self):
-        user = User.query.get(get_jwt_identity())
-        if not user or not user.is_admin:
-            return {'msg': 'Unauthorized'}, 403
 
-        count = User.query.count()
-        return {'total_users': count}
     
     @jwt_required()
     def put(self, user_id=None):
@@ -95,6 +87,17 @@ class UsersResource(Resource):
         db.session.commit()
         cache.delete('users_list')  # Clear cache after deleting a user
         return {'msg': "User has been delete!"}, 200
+    
+class UserCountResource(Resource):
+    @jwt_required()
+    def get(self):
+        user = User.query.get(get_jwt_identity())
+        if not user or not user.is_admin:
+            return {'msg': 'Unauthorized'}, 403
+
+        count = User.query.count()
+        return {'total_users': count}
+
     
 class Parkinglots(Resource):
     
@@ -242,17 +245,15 @@ class ParkingSpots(Resource):
                 return {'msg': "Spot not found"}, 404
 
             spot_data = spot.to_dict()
-
-            if is_admin and not spot.is_avail:
-                # Show active reservation if exists
-                reservation = Reservation.query.filter_by(spot_id=spot.id, is_active=True).first()
-                if reservation:
-                    spot_data['reservation'] = {
-                        'user_id': reservation.user_id,
-                        'username': reservation.user.username,
-                        'parking_timestamp': reservation.parking_timestamp.isoformat(),
-                        'leaving_timestamp': reservation.leaving_timestamp.isoformat() if reservation.leaving_timestamp else None
-                    }
+            reservation = Reservation.query.filter_by(spot_id=spot.id, is_active=True).first()
+            if reservation:
+                spot_data['reservation'] = {
+                    'user_id': reservation.user_id,
+                    'username': reservation.user.username,
+                    'parking_timestamp': reservation.parking_timestamp.isoformat(),
+                    'leaving_timestamp': reservation.leaving_timestamp.isoformat() if reservation.leaving_timestamp else None
+                }
+                spot_data['is_avail'] = False  # override in case data is stale
             return {'msg': "Spot found", 'spot': spot_data}, 200
 
         # List all spots, optionally filtered by lot
@@ -266,15 +267,15 @@ class ParkingSpots(Resource):
 
         for spot in spots:
             spot_data = spot.to_dict()
-            if is_admin and not spot.is_avail:
-                reservation = Reservation.query.filter_by(spot_id=spot.id, is_active=True).first()
-                if reservation:
-                    spot_data['reservation'] = {
-                        'user_id': reservation.user_id,
-                        'username': reservation.user.username,
-                        'parking_timestamp': reservation.parking_timestamp.isoformat(),
-                        'leaving_timestamp': reservation.leaving_timestamp.isoformat() if reservation.leaving_timestamp else None
-                    }
+            reservation = Reservation.query.filter_by(spot_id=spot.id, is_active=True).first()
+            if reservation:
+                spot_data['reservation'] = {
+                    'user_id': reservation.user_id,
+                    'username': reservation.user.username,
+                    'parking_timestamp': reservation.parking_timestamp.isoformat(),
+                    'leaving_timestamp': reservation.leaving_timestamp.isoformat() if reservation.leaving_timestamp else None
+                }
+                spot_data['is_avail'] = False  # ensure availability reflects reality
             result.append(spot_data)
 
         return {'msg': "All spots", 'spots': result}, 200
@@ -521,28 +522,26 @@ class RegisterResource(Resource):
 class ReportGenerate(Resource):
     #@jwt_required()
     def get(self, user_id=None):
-        
         if user_id is None:
             return {'msg': "User ID is required to generate report"}, 400 
         
         os.makedirs(os.path.join('static', str(user_id)), exist_ok=True)
         data = []
-        print(user_id)
+        now = datetime.now()
+
         if user_id == 1:
-            
-            # Admin — export all reservations
-            reservations = Reservation.query.all()
-            print(reservations)
-            if not reservations:
-                return {'msg': "No reservations exist in the system"}, 404
-            
+            # Admin — export only past reservations
+            reservations = Reservation.query.filter(Reservation.leaving_timestamp < now).all()
         else:
-           # Normal user — only export their reservations
-            reservations = Reservation.query.filter_by(user_id=user_id).all()
-            print(reservations)
-            if not reservations:
-                return {'msg': "No reservations found for this user"}, 404
-        # Build data
+            # Normal user — only their past reservations
+            reservations = Reservation.query.filter(
+                Reservation.user_id == user_id,
+                Reservation.leaving_timestamp < now
+            ).all()
+
+        if not reservations:
+            return {'msg': "No past reservations found."}, 404
+
         for r in reservations:
             data.append({
                 'username': r.user.username,
@@ -552,10 +551,9 @@ class ReportGenerate(Resource):
                 'address': r.spot.lot.address,
                 'parking_timestamp': r.parking_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 'leaving_timestamp': r.leaving_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                'parking_cost': round(r.calculate_cost(), 2),
-                'created_at': r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else '',
-                'updated_at': r.updated_at.strftime("%Y-%m-%d %H:%M:%S") if r.updated_at else ''
+                'parking_cost': round(r.calculate_cost(), 2)
             })
+
         from celery_app import generate_csv_task
         generate_csv_task.delay(data, user_id)
 

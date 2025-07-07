@@ -31,6 +31,13 @@ def generate_csv_task(data, user_id):
             writer = csv.DictWriter(f, fieldnames=data[0].keys())
             writer.writeheader()
             writer.writerows(data)
+            
+            '''user = User.query.get(user_id)
+            if user:
+                send_mail(
+                    user.email,
+                    "Reservation Report Ready",
+                    f"Hi {user.username},\n\nYour parking report is ready!\nDownload it here:\nhttp://127.0.0.1:5000/static/{user_id}/report.csv\n\n- Vehicle Parking App")'''
 
     return filename
 
@@ -50,6 +57,6 @@ celery.conf.beat_schedule = {
     'daily_remainders_mails': {
         'task': 'celery_app.daily_remainders',
         #'schedule':timedelta(seconds=10),
-        'schedule': crontab(day_of_month=1,hour=9, minute=0),  # Every day at 8 AM
+        'schedule': crontab(day_of_month=1,hour=9, minute=0),  #monthly at 9:00 AM
         }
     }

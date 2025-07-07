@@ -1,0 +1,257 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { requireAdminAccess } from '@/utils/auth'
+
+const route = useRoute()
+const lotId = route.params.lot_id
+const spots = ref([])
+const token = localStorage.getItem('token')
+
+// Modal state
+const showEditModal = ref(false)
+const editSpotData = ref({ id: null, spot_number: '' })
+
+// Fetch spots for this lot
+const fetchSpots = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/spots?lot_id=${lotId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    spots.value = data.spots || []
+  } catch (err) {
+    console.error("Failed to fetch spots:", err)
+  }
+}
+
+// Open modal for editing
+const openEditModal = (spot) => {
+  editSpotData.value = { ...spot }
+  showEditModal.value = true
+}
+
+// Save updated spot
+const submitEdit = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/spots/${editSpotData.value.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        spot_number: editSpotData.value.spot_number
+      })
+    })
+
+    const data = await res.json()
+    if (res.ok) {
+      alert("Spot updated successfully")
+      showEditModal.value = false
+      fetchSpots()
+    } else {
+      alert(data.msg || "Update failed")
+    }
+  } catch (err) {
+    console.error(err)
+    alert("Error updating spot")
+  }
+}
+
+onMounted(() => {
+  requireAdminAccess()
+  fetchSpots()
+})
+</script>
+
+<template>
+  <div class="container">
+    <h1>Parking Spots for Lot {{ lotId }}</h1>
+
+    <div class="grid">
+      <div v-for="spot in spots" :key="spot.id" class="card">
+        <div class="spot-header">
+          <p><strong>Spot Number:</strong> {{ spot.spot_number }}</p>
+          <span
+            class="badge"
+            :class="{
+              available: !spot.reservation,
+              occupied: !!spot.reservation
+            }"
+          >
+            {{ spot.reservation ? 'Occupied' : 'Available' }}
+          </span>
+        </div>
+
+        <div v-if="spot.reservation" class="reservation-info">
+          <p><strong>Reserved By:</strong> {{ spot.reservation.username }} (ID: {{ spot.reservation.user_id }})</p>
+          <p><strong>From:</strong> {{ new Date(spot.reservation.parking_timestamp).toLocaleString() }}</p>
+        </div>
+        <div v-else class="reservation-info available">
+          <p><em>Currently Available</em></p>
+        </div>
+
+        <div class="btn-group">
+          <button class="edit" @click="() => openEditModal(spot)">Edit Spot</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div v-if="showEditModal" class="modal-overlay">
+      <div class="modal-card">
+        <h2>Edit Spot</h2>
+        <label>Spot Number:</label>
+        <input v-model="editSpotData.spot_number" type="text" />
+        <div class="btn-group right">
+          <button @click="showEditModal = false" class="cancel">Cancel</button>
+          <button @click="submitEdit" class="save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.container {
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #343a40;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: white;
+  padding: 1.2rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  flex: 0 0 300px;
+  position: relative;
+}
+
+.spot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.badge.available {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.badge.occupied {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.btn-group.right {
+  justify-content: flex-end;
+}
+
+button.edit {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.edit:hover {
+  background-color: #0069d9;
+}
+
+button.cancel {
+  background-color: #6c757d;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.save {
+  background-color: #28a745;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.save:hover {
+  background-color: #218838;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-card {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.modal-card h2 {
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.modal-card input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.reservation-info {
+  background-color: #f1f3f5;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.reservation-info.available {
+  background-color: #e6ffed;
+  color: #155724;
+}
+</style>
