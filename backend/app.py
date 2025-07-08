@@ -123,7 +123,7 @@ if __name__ == "__main__":
                 if spot:
                     spot.is_avail = True
                     
-                reservation.parking_cost=reservation.calculate_cost()
+                #reservation.parking_cost=reservation.calculate_cost()
 
                 db.session.add(reservation)
 
@@ -157,9 +157,14 @@ if __name__ == "__main__":
                 if spot:
                     spot.is_avail = False
                     
-                reservation.parking_cost=reservation.calculate_cost()
+                #reservation.parking_cost=reservation.calculate_cost()
 
                 db.session.add(reservation)
+            
+            db.session.commit()
+            
+            for reservation in Reservation.query.all():
+                reservation.parking_cost=reservation.calculate_cost()
             
             db.session.commit()
 
