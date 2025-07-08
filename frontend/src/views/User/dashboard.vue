@@ -82,6 +82,7 @@ onMounted(() => {
         <p><strong>Pin Code:</strong> {{ lot.pin_code }}</p>
         <p><strong>Price per Hour:</strong> ₹{{ lot.price_per_hour }}</p>
         <p><strong>Total Spots:</strong> {{ lot.number_of_spots }}</p>
+        <p><strong>Available Spots:</strong> {{ lot.available_spots }}</p>
 
         <!-- Book Button -->
         <div style="margin-top: 1rem;">

@@ -102,7 +102,7 @@ onMounted(fetchReservations)
     <h2>Current Reservations</h2>
     <div v-if="currentReservations.length" class="grid">
       <div v-for="r in currentReservations" :key="r.id" class="card">
-        <p><strong>Spot:</strong> {{ r.spot_number || r.spot_id }}</p>
+        <p><strong>Spot:</strong> {{ r.lot_location }} - {{ r.spot_number }}</p>
         <p><strong>From:</strong> {{ formatDateTime(r.parking_timestamp) }}</p>
         <button class="end" @click="endReservation(r)">End</button>
       </div>
@@ -112,7 +112,7 @@ onMounted(fetchReservations)
     <h2 style="margin-top: 2rem;">Past Reservations</h2>
     <div v-if="pastReservations.length" class="grid">
       <div v-for="r in pastReservations" :key="r.id" class="card">
-        <p><strong>Spot:</strong> {{ r.spot_number || r.spot_id }}</p>
+        <p><strong>Spot:</strong> {{ r.lot_location }} - {{ r.spot_number }}</p>
         <p><strong>From:</strong> {{ formatDateTime(r.parking_timestamp) }}</p>
         <p><strong>To:</strong> {{ formatDateTime(r.leaving_timestamp) }}</p>
         <p><strong>Cost:</strong> ₹{{ r.parking_cost }}</p>

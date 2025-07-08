@@ -15,7 +15,7 @@ celery.conf.update(
 
 @celery.task
 def generate_csv_task(data, user_id):
-    time.sleep(10)  # Simulate a delay for the task
+    #time.sleep(10)  # Simulate a delay for the task
     # Ensure the static/user_id directory exists
     folder_path = f'static/{user_id}'
     os.makedirs(folder_path, exist_ok=True)

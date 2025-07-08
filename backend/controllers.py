@@ -101,27 +101,9 @@ class UserCountResource(Resource):
 
     
 class Parkinglots(Resource):
-    
+
     @jwt_required()
     @cache.cached(timeout=600,key_prefix='parking_lots_list')
-    def get(self, spot_id=None):
-        if spot_id:
-            spot = ParkingSpot.query.get(spot_id)
-            if not spot:
-                return {'msg': "Spot not found"}, 404
-            return {'msg': "Spot found", 'spot': spot.to_dict()}, 200
-
-        lot_id = request.args.get('lot_id')
-        query = ParkingSpot.query
-        if lot_id:
-            query = query.filter_by(lot_id=lot_id)
-
-        spots = query.all()
-        return {
-            'msg': "All spots",
-            'spots': [s.to_dict() for s in spots]
-        }, 200
-
     def get(self,lot_id=None):
         if lot_id:
             lot = ParkingLot.query.get(lot_id)
@@ -129,6 +111,7 @@ class Parkinglots(Resource):
                 return {'msg': "Lot found", 'Lot': lot.to_dict()}
             return {'msg': "Lot not found!"}, 404
         lots = [lot.to_dict() for lot in ParkingLot.query.all()]
+        print(lots)
         if not lots:
             return {'msg': "No parking lots available!"}, 200
         return {"msg": "All parking lots", "lots": lots},200
@@ -422,6 +405,7 @@ class Reservations(Resource):
         spot.is_avail = False  # mark as occupied
         db.session.add(reservation)
         db.session.commit()
+        cache.delete('parking_lots_list')
 
         return {
             'msg': "Parking started. Spot reserved.",
@@ -451,6 +435,7 @@ class Reservations(Resource):
         r.spot.is_avail = True
 
         db.session.commit()
+        cache.delete('parking_lots_list')
         return {'msg': "Parking ended successfully", 'cost': r.parking_cost}, 200
 
 

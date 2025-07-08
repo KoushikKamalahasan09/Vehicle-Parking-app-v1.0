@@ -38,13 +38,15 @@ class ParkingLot(db.Model):
     spots = db.relationship('ParkingSpot', backref='lot', cascade="all, delete-orphan", lazy=True)
 
     def to_dict(self):
+        available_spots=sum(1 for spot in self.spots if spot.is_avail)
         return {
             'id': self.id,
             'location_name': self.location_name,
             'price_per_hour': self.price_per_hour,
             'address': self.address,
             'pin_code': self.pin_code,
-            'number_of_spots': self.number_of_spots
+            'number_of_spots': self.number_of_spots,
+            'available_spots':available_spots
         }
     
 
@@ -104,6 +106,8 @@ class Reservation(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'spot_id': self.spot_id,
+            'spot_number':self.spot.spot_number,
+            'lot_location':self.spot.lot.location_name,
             'parking_timestamp': self.parking_timestamp.isoformat(),
             'leaving_timestamp': self.leaving_timestamp.isoformat() if self.leaving_timestamp else "Still using",
             'parking_cost': self.calculate_cost(),

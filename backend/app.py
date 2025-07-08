@@ -5,7 +5,7 @@ from flask_restful import Resource, Api
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity,create_access_token
 from controllers import Parkinglots,UsersResource,ParkingSpots,Reservations,LoginResource,RegisterResource,ReportGenerate,UserCountResource,SingleReservationReport
 from controllers import cache
-from datetime import datetime
+from datetime import datetime,timedelta
 
 now =datetime.now()
 
@@ -68,11 +68,12 @@ if __name__ == "__main__":
             ]
 
             lots = [
-                ParkingLot(location_name='Lot 1', price_per_hour=1000, address='123 Main St', pin_code='123456', number_of_spots=4),
-                ParkingLot(location_name='Lot 2', price_per_hour=500, address='1234 Main St', pin_code='123457', number_of_spots=5),
-                ParkingLot(location_name='Lot 3', price_per_hour=1500, address='1235 Main St', pin_code='123458', number_of_spots=6),
-                ParkingLot(location_name='Lot 4', price_per_hour=750, address='1236 Main St', pin_code='123459', number_of_spots=7)
+                ParkingLot(location_name='Connaught Place Parking', price_per_hour=80, address='Connaught Place, New Delhi', pin_code='110001', number_of_spots=4),
+                ParkingLot(location_name='Phoenix Mall Parking', price_per_hour=60, address='Phoenix Marketcity, Mumbai', pin_code='400070', number_of_spots=5),
+                ParkingLot(location_name='Housing Society Parking', price_per_hour=20, address='Sector 15, Chandigarh', pin_code='160015', number_of_spots=6),
+                ParkingLot(location_name='Bus Stand Parking', price_per_hour=30, address='Majestic Bus Station, Bengaluru', pin_code='560009', number_of_spots=7)
             ]
+
 
             db.session.add(admin)
             db.session.add_all(users)
@@ -121,9 +122,44 @@ if __name__ == "__main__":
                 spot = db.session.get(ParkingSpot, spot_id)
                 if spot:
                     spot.is_avail = True
+                    
+                reservation.parking_cost=reservation.calculate_cost()
 
                 db.session.add(reservation)
 
+            
+            db.session.commit()
+            
+            current_reservations_data = [
+                                            # user_id=2 → 3 reservations
+                                            (2, 13, now - timedelta(hours=1)), 
+                                            (2, 14, now - timedelta(hours=2)), 
+                                            (2, 15, now - timedelta(minutes=30)), 
+
+                                            # user_id=3 → 2 reservations
+                                            (3, 16, now - timedelta(hours=3)),
+                                            (3, 17, now - timedelta(hours=1, minutes=15)),  
+
+                                            # user_id=4 → 1 reservation
+                                            (4, 18, now - timedelta(hours=0.5)),  
+
+                                        ]
+            for r in current_reservations_data:
+                user_id, spot_id, start = r
+                reservation = Reservation(
+                    user_id=user_id,
+                    spot_id=spot_id,
+                    parking_timestamp=start,
+                    is_active=True
+                )
+                
+                spot = db.session.get(ParkingSpot, spot_id)
+                if spot:
+                    spot.is_avail = False
+                    
+                reservation.parking_cost=reservation.calculate_cost()
+
+                db.session.add(reservation)
             
             db.session.commit()
 
