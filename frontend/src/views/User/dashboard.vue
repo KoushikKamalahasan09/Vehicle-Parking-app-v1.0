@@ -50,7 +50,7 @@ const bookSpot = async (lotId) => {
     const data = await response.json()
 
     if (response.ok) {
-      alert(`Reservation successful! Spot: ${data.spot_number}`)
+      alert(`Reservation successful!`)
     } else {
       alert(data.msg || 'Failed to book spot')
     }
@@ -85,9 +85,16 @@ onMounted(() => {
         <p><strong>Available Spots:</strong> {{ lot.available_spots }}</p>
 
         <!-- Book Button -->
-        <div style="margin-top: 1rem;">
-          <button @click="() => bookSpot(lot.id)">Book Spot</button>
+
+      <div style="margin-top: 1rem;">
+          <button
+            :disabled="lot.available_spots === 0"
+            :style="lot.available_spots === 0 ? 'opacity: 0.5; cursor: not-allowed;' : ''"
+            @click="() => bookSpot(lot.id)">
+            Book Spot
+          </button>
         </div>
+
       </div>
     </div>
 
