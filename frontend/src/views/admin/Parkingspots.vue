@@ -12,6 +12,23 @@ const token = localStorage.getItem('token')
 const showEditModal = ref(false)
 const editSpotData = ref({ id: null, spot_number: '' })
 
+const lotDetails = ref(null)
+
+const fetchLotDetails = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/lots/${lotId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const data = await res.json()
+    lotDetails.value = data.Lot
+  } catch (err) {
+    console.error("Failed to fetch lot details:", err)
+  }
+}
+
+
 // Fetch spots for this lot
 const fetchSpots = async () => {
   try {
@@ -62,12 +79,15 @@ const submitEdit = async () => {
 onMounted(() => {
   requireAdminAccess()
   fetchSpots()
+  fetchLotDetails()
 })
 </script>
 
 <template>
   <div class="container">
-    <h1>Parking Spots for Lot {{ lotId }}</h1>
+    <h1>Parking Spots for Lot {{ lotId }}
+      <span v-if="lotDetails"> - {{ lotDetails.location_name }}</span>
+    </h1>
 
     <div class="grid">
       <div v-for="spot in spots" :key="spot.id" class="card">

@@ -111,7 +111,7 @@ class Parkinglots(Resource):
                 return {'msg': "Lot found", 'Lot': lot.to_dict()}
             return {'msg': "Lot not found!"}, 404
         lots = [lot.to_dict() for lot in ParkingLot.query.all()]
-        print(lots)
+        #print(lots)
         if not lots:
             return {'msg': "No parking lots available!"}, 200
         return {"msg": "All parking lots", "lots": lots},200
@@ -119,7 +119,7 @@ class Parkinglots(Resource):
     @jwt_required()
     def post(self):
         id=get_jwt_identity()
-        print(id)
+        #print(id)
         user=User.query.get(id)
         if not user.is_admin:
             return {'msg': "You are not authorized to create parking lots!"}, 403
@@ -209,6 +209,10 @@ class Parkinglots(Resource):
         lot = ParkingLot.query.get(lot_id)
         if not lot:
             return {'msg': "Parking lot does not exist!"}, 404
+        active_reservations = db.session.query(Reservation).join(ParkingSpot).filter(ParkingSpot.lot_id == lot_id,Reservation.is_active == True).first()
+
+        if active_reservations:
+            return {'msg': "Cannot delete parking lot. One or more active reservations exist in this lot."}, 400
         db.session.delete(lot)
         db.session.commit()
         cache.delete('parking_lots_list')  # Clear cache after deleting parking lot

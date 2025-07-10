@@ -75,22 +75,22 @@ const renderChart = () => {
   const ctx = document.getElementById('reservationChart')
   if (chartInstance.value) chartInstance.value.destroy()
 
-  const counts = {}
+  const lotCounts = {}
+
   reservations.value.forEach(r => {
-    const date = new Date(r.parking_timestamp)
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    counts[key] = (counts[key] || 0) + 1
+    const lot = r.lot_location || "Unknown Lot"
+    lotCounts[lot] = (lotCounts[lot] || 0) + 1
   })
 
-  const labels = Object.keys(counts).sort()
-  const values = labels.map(label => counts[label])
+  const labels = Object.keys(lotCounts)
+  const values = labels.map(label => lotCounts[label])
 
   chartInstance.value = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'Reservations per Month',
+        label: 'Reservation Count',
         data: values,
         backgroundColor: '#4e73df'
       }]
@@ -101,7 +101,7 @@ const renderChart = () => {
         legend: { display: false },
         title: {
           display: true,
-          text: 'Monthly Reservation Activity'
+          text: 'Reservations per Parking Lot'
         }
       },
       scales: {
@@ -112,6 +112,7 @@ const renderChart = () => {
     }
   })
 }
+
 
 onMounted(fetchReservations)
 </script>
@@ -234,5 +235,28 @@ canvas {
 .csv-button:hover {
   background-color: #218838;
 }
+
+.lot-summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.lot-summary-box {
+  background: #ffffff;
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  min-width: 200px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.lot-summary-box h4 {
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
 
 </style>

@@ -23,7 +23,6 @@ const fetchReservations = async () => {
       headers: { Authorization: `Bearer ${token}` }
     })
     const data = await res.json()
-
     reservations.value = data.reservations?.filter(r => r.user_id === userId) || []
 
     if (reservations.value.length > 0) {
@@ -37,39 +36,13 @@ const fetchReservations = async () => {
   }
 }
 
-const downloadCsv = async () => {
-  try {
-    const res = await fetch(`http://localhost:5000/generate_report/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-
-    if (res.ok) {
-      alert(data.msg || 'Report generation started.')
-      if (data.url) {
-        // optional delay
-        setTimeout(() => {
-          window.open(data.url, '_blank')
-        }, 2000)
-      }
-    } else {
-      alert(data.msg || 'Failed to generate report.')
-    }
-  } catch (err) {
-    console.error('CSV Download Error:', err)
-    alert('Server error')
-  }
-}
-
 const calculateStats = () => {
   let hours = 0, amount = 0
   reservations.value.forEach(r => {
-    if (!r.leaving_timestamp) return  // ✅ Skip active reservations
-
+    if (!r.leaving_timestamp) return
     const start = new Date(r.parking_timestamp)
     const end = new Date(r.leaving_timestamp)
     const diff = (end - start) / (1000 * 60 * 60)
-    
     if (!isNaN(diff)) {
       hours += diff
       amount += r.parking_cost || 0
@@ -80,41 +53,64 @@ const calculateStats = () => {
   totalAmount.value = amount.toFixed(2)
 }
 
+const downloadCsv = async () => {
+  try {
+    const res = await fetch(`http://localhost:5000/generate_report/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+
+    if (res.ok) {
+      alert(data.msg || 'Report generation started.')
+      if (data.url) {
+        setTimeout(() => window.open(data.url, '_blank'), 2000)
+      }
+    } else {
+      alert(data.msg || 'Failed to generate report.')
+    }
+  } catch (err) {
+    console.error('CSV Download Error:', err)
+    alert('Server error')
+  }
+}
+
 const renderChart = () => {
-  const ctx = document.getElementById('userChart')
+  const ctx = document.getElementById('reservationChart')
   if (chartInstance.value) chartInstance.value.destroy()
 
-  const counts = {}
+  const lotCounts = {}
 
   reservations.value.forEach(r => {
-    const date = new Date(r.parking_timestamp)
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    counts[key] = (counts[key] || 0) + 1
+    const lot = r.lot_location || "Unknown Lot"
+    lotCounts[lot] = (lotCounts[lot] || 0) + 1
   })
 
-  const labels = Object.keys(counts).sort()
-  const values = labels.map(l => counts[l])
+  const labels = Object.keys(lotCounts)
+  const values = labels.map(label => lotCounts[label])
 
   chartInstance.value = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'Reservations per Month',
+        label: 'Reservation Count',
         data: values,
         backgroundColor: '#17a2b8'
       }]
     },
     options: {
       responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: `Reservations per Lot for ${username.value}`
+        }
+      },
       scales: {
         y: {
           beginAtZero: true
         }
-      },
-      plugins: {
-        legend: { display: false },
-        title: { display: true, text: `Reservation Activity for ${username.value}` }
       }
     }
   })
@@ -148,46 +144,87 @@ onMounted(() => {
       </div>
     </div>
 
-    <canvas id="userChart"></canvas>
+    <div class="chart-container">
+      <canvas id="reservationChart"></canvas>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .summary-container {
+  max-width: 960px;
+  margin: 2rem auto;
   padding: 2rem;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f4f7fa;
-  min-height: 100vh;
+  background: #f6f9fc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 h1 {
-  font-size: 1.8rem;
-  margin-bottom: 1.5rem;
-  color: #333;
+  text-align: center;
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 2rem;
 }
 
 .summary-boxes {
   display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
   flex-wrap: wrap;
-  gap: 1rem;
   margin-bottom: 2rem;
 }
 
 .summary-box {
   flex: 1;
-  min-width: 220px;
-  background: white;
-  padding: 1.2rem;
+  background: #ffffff;
+  padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
+  transition: transform 0.3s ease;
+  min-width: 200px;
+}
+
+.summary-box:hover {
+  transform: translateY(-5px);
+}
+
+.summary-box h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #34495e;
+}
+
+.summary-box p {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #17a2b8;
+}
+
+.chart-container {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  animation: fadeInUp 0.4s ease;
 }
 
 canvas {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 100% !important;
+  height: 400px !important;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .csv-button {
@@ -204,5 +241,4 @@ canvas {
 .csv-button:hover {
   background-color: #218838;
 }
-
 </style>

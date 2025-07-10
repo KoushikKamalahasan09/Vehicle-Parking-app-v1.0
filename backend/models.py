@@ -66,7 +66,7 @@ class ParkingSpot(db.Model):
     spot_number = db.Column(db.String(10), nullable=False)
     is_avail = db.Column(db.Boolean, default=True)
 
-    reservations = db.relationship('Reservation', backref='spot', lazy=True,cascade="all, delete-orphan")
+    reservations = db.relationship('Reservation', backref='spot', lazy=True,cascade="all, delete-orphan",passive_deletes=True)
     
 
     def to_dict(self):
@@ -85,7 +85,7 @@ class Reservation(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    spot_id = db.Column(db.Integer, db.ForeignKey('parking_spots.id'), nullable=False)
+    spot_id = db.Column(db.Integer, db.ForeignKey('parking_spots.id',ondelete='CASCADE'), nullable=False)
 
     parking_timestamp = db.Column(db.DateTime, nullable=False)
     leaving_timestamp = db.Column(db.DateTime, nullable=True)
@@ -105,9 +105,10 @@ class Reservation(db.Model):
         return {
             'id': self.id,
             'user_id': self.user_id,
-            'spot_id': self.spot_id,
-            'spot_number':self.spot.spot_number,
-            'lot_location':self.spot.lot.location_name,
+            'spot_id': self.spot_id if self.spot_id else None,
+            'spot_number':self.spot.spot_number if self.spot.spot_number else None,
+            'lot_location':self.spot.lot.location_name if self.spot.lot.location_name else None,
+            'price_per_hour':self.spot.lot.price_per_hour if self.spot.lot.price_per_hour else 0.0,
             'parking_timestamp': self.parking_timestamp.isoformat(),
             'leaving_timestamp': self.leaving_timestamp.isoformat() if self.leaving_timestamp else "Still using",
             'parking_cost': self.calculate_cost(),

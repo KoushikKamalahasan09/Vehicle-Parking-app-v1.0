@@ -26,26 +26,6 @@ const fetchReservations = async () => {
   }
 }
 
-const downloadAdminReport = async () => {
-  try {
-    const res = await fetch('http://localhost:5000//generate_report/1', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-    if (res.ok) {
-      alert('Report generation started. Please check your static folder or download shortly.')
-      // Optionally, open the URL:
-      window.open(data.url, '_blank')
-    } else {
-      alert(data.msg || 'Failed to generate report')
-    }
-  } catch (err) {
-    console.error('Report fetch failed:', err)
-    alert('Server error')
-  }
-}
-
-
 const fetchUserCount = async () => {
   try {
     const res = await fetch('http://localhost:5000/users/count', {
@@ -72,52 +52,61 @@ const renderChart = () => {
   const ctx = document.getElementById('globalChart')
   if (chartInstance.value) chartInstance.value.destroy()
 
-  const counts = {}
+  const lotCounts = {}
 
   reservations.value.forEach(r => {
-    const date = new Date(r.parking_timestamp)
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-    counts[key] = (counts[key] || 0) + 1
+    const lot = r.lot_location || 'Unknown Lot'
+    lotCounts[lot] = (lotCounts[lot] || 0) + 1
   })
 
-  const labels = Object.keys(counts).sort()
-  const values = labels.map(l => counts[l])
+  const labels = Object.keys(lotCounts)
+  const values = labels.map(label => lotCounts[label])
 
   chartInstance.value = new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'Monthly Reservations',
+        label: 'Total Reservations per Lot',
         data: values,
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37,99,235,0.1)',
-        fill: true,
-        tension: 0.3
+        backgroundColor: '#2563eb'
       }]
     },
     options: {
       responsive: true,
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            stepSize: 1
-          }
-        }
-      },
       plugins: {
-        legend: { display: true },
+        legend: { display: false },
         title: {
           display: true,
-          text: 'Monthly Reservation Activity',
-          font: {
-            size: 18
-          }
+          text: 'Reservations per Parking Lot',
+          font: { size: 18 }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
         }
       }
     }
   })
+}
+
+const downloadAdminReport = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/generate_report/1', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (res.ok) {
+      alert('Report generation started. Please check your static folder or download shortly.')
+      window.open(data.url, '_blank')
+    } else {
+      alert(data.msg || 'Failed to generate report')
+    }
+  } catch (err) {
+    console.error('Report fetch failed:', err)
+    alert('Server error')
+  }
 }
 
 onMounted(() => {
@@ -125,6 +114,7 @@ onMounted(() => {
   fetchUserCount()
 })
 </script>
+
 
 <template>
   <div class="summary-container">
