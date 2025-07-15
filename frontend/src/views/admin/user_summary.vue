@@ -26,7 +26,7 @@ const fetchReservations = async () => {
     reservations.value = data.reservations?.filter(r => r.user_id === userId) || []
 
     if (reservations.value.length > 0) {
-      username.value = reservations.value[0].user?.username || `User ${userId}`
+      username.value = reservations.value[0].username || `User ${userId}`
     }
 
     calculateStats()
@@ -124,7 +124,7 @@ onMounted(() => {
 
 <template>
   <div class="summary-container">
-    <h1>Summary for {{ username || `User ${userId}` }}</h1>
+    <h1>Summary for {{ username}}</h1>
 
     <div class="summary-boxes">
       <div class="summary-box">

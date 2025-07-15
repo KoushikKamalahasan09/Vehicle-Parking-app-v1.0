@@ -105,6 +105,7 @@ class Reservation(db.Model):
         return {
             'id': self.id,
             'user_id': self.user_id,
+            'username':self.user.username,
             'spot_id': self.spot_id if self.spot_id else None,
             'spot_number':self.spot.spot_number if self.spot.spot_number else None,
             'lot_location':self.spot.lot.location_name if self.spot.lot.location_name else None,

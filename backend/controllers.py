@@ -505,6 +505,7 @@ class RegisterResource(Resource):
             return {'msg': "User already exists!"}, 409
         user = User(email=email, username=username, passhash=password)
         db.session.add(user); db.session.commit()
+        cache.delete('users_list')  # Clear cache after updating user information
         return {'msg': "Successfully Registered!"}, 200     
     
 
